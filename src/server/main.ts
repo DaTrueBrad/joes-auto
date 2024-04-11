@@ -1,10 +1,34 @@
 import express from "express";
 import ViteExpress from "vite-express";
 import { handleGet } from "./controller";
-import endpoints from "./util/endpoints";
+import endpoints from "./util/endpoints";// @ts-ignore
+import cron from 'node-cron'
+import db from "./util/database";
+import seed from "./util/seed";
+import fs from 'fs'
 
 const app = express();
 app.use(express.json())
+
+const resetDatabase = () => {
+  fs.readFile('./util/seed.js', 'utf8', (err, data) => {
+    if (err) {
+      console.error('Error reading seed file:', err);
+      return;
+    }
+
+    fs.writeFile('./util/database.js', data, 'utf8', (err) => {
+      if (err) {
+        console.error('Error writing to database file:', err);
+        return;
+      }
+
+      console.log('Database has been reset to initial state.');
+    });
+  });
+};
+
+cron.schedule('0 6 * * *', resetDatabase);
 
 endpoints.forEach((endpoint) => {
   switch (endpoint.method.toUpperCase()) {
